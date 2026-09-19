@@ -23,7 +23,7 @@ public class AnalyzeConversationRequest
     /// Whether to stream the response via SSE.
     /// </summary>
     [JsonPropertyName("stream")]
-    public required bool Stream { get; set; }
+    public bool Stream { get; set; }
 
     /// <summary>
     /// Fields to extract when <see cref="CcaiResultTypes.Fields"/> is requested.

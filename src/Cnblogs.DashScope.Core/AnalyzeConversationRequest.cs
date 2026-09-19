@@ -21,6 +21,7 @@ public class AnalyzeConversationRequest
 
     /// <summary>
     /// Whether to stream the response via SSE.
+    /// Defaults to <c>false</c>; sync/stream client methods overwrite this value.
     /// </summary>
     [JsonPropertyName("stream")]
     public bool Stream { get; set; }

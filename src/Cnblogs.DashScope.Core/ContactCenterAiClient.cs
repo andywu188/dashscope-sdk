@@ -39,11 +39,6 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(options);
-        if (httpClient.BaseAddress is null)
-        {
-            throw new ArgumentException("HttpClient.BaseAddress must be set to https://{endpoint}/.", nameof(httpClient));
-        }
-
         if (string.IsNullOrWhiteSpace(options.AccessKeyId))
         {
             throw new ArgumentException("AccessKeyId is required.", nameof(options));
@@ -54,7 +49,18 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
             throw new ArgumentException("AccessKeySecret is required.", nameof(options));
         }
 
-        if (!string.Equals(httpClient.BaseAddress.Host, options.Endpoint, StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(options.Endpoint))
+        {
+            throw new ArgumentException("Endpoint is required.", nameof(options));
+        }
+
+        if (httpClient.BaseAddress is null)
+        {
+            throw new ArgumentException("HttpClient.BaseAddress must be set to https://{endpoint}/.", nameof(httpClient));
+        }
+
+        if (string.Equals(httpClient.BaseAddress.Host, options.Endpoint, StringComparison.OrdinalIgnoreCase)
+            == false)
         {
             throw new ArgumentException(
                 $"HttpClient.BaseAddress host '{httpClient.BaseAddress.Host}' must match options.Endpoint '{options.Endpoint}'.",
@@ -595,6 +601,7 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
 
     private static HttpClient CreateHttpClient(ContactCenterAiOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         if (string.IsNullOrWhiteSpace(options.AccessKeyId))
         {
             throw new ArgumentException("AccessKeyId is required.", nameof(options));
@@ -603,6 +610,11 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
         if (string.IsNullOrWhiteSpace(options.AccessKeySecret))
         {
             throw new ArgumentException("AccessKeySecret is required.", nameof(options));
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Endpoint))
+        {
+            throw new ArgumentException("Endpoint is required.", nameof(options));
         }
 
         return new HttpClient

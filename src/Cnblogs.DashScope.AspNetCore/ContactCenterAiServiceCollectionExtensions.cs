@@ -14,6 +14,10 @@ public static class ContactCenterAiServiceCollectionExtensions
     /// <summary>
     /// Adds <see cref="IContactCenterAiClient"/> using configuration section (default: contactCenterAi).
     /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Application configuration root.</param>
+    /// <param name="sectionName">Configuration section name. Defaults to <c>contactCenterAi</c>.</param>
+    /// <returns>HTTP client builder for further configuration.</returns>
     public static IHttpClientBuilder AddContactCenterAiClient(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -26,26 +30,33 @@ public static class ContactCenterAiServiceCollectionExtensions
     /// <summary>
     /// Adds <see cref="IContactCenterAiClient"/> using a configuration section.
     /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="section">The ContactCenterAI configuration section.</param>
+    /// <returns>HTTP client builder for further configuration.</returns>
+    /// <exception cref="InvalidOperationException">AccessKeyId or AccessKeySecret is missing.</exception>
     public static IHttpClientBuilder AddContactCenterAiClient(
         this IServiceCollection services,
         IConfigurationSection section)
     {
-        var accessKeyId = section["accessKeyId"];
-        if (string.IsNullOrWhiteSpace(accessKeyId))
+        if (string.IsNullOrWhiteSpace(section["accessKeyId"]))
         {
             throw new InvalidOperationException("There is no accessKeyId provided in given section");
         }
 
-        var accessKeySecret = section["accessKeySecret"];
-        if (string.IsNullOrWhiteSpace(accessKeySecret))
+        if (string.IsNullOrWhiteSpace(section["accessKeySecret"]))
         {
             throw new InvalidOperationException("There is no accessKeySecret provided in given section");
         }
 
-        var endpoint = section["endpoint"] ?? "contactcenterai.cn-shanghai.aliyuncs.com";
-
         services.Configure<ContactCenterAiOptions>(section);
-        return services.AddContactCenterAiHttpClient(endpoint);
+        services.PostConfigure<ContactCenterAiOptions>(o =>
+        {
+            if (string.IsNullOrWhiteSpace(o.Endpoint))
+            {
+                o.Endpoint = "contactcenterai.cn-shanghai.aliyuncs.com";
+            }
+        });
+        return services.AddContactCenterAiHttpClient();
     }
 
     /// <summary>
@@ -66,7 +77,19 @@ public static class ContactCenterAiServiceCollectionExtensions
         string? regionId = null,
         string? securityToken = null)
     {
-        var resolvedEndpoint = endpoint ?? "contactcenterai.cn-shanghai.aliyuncs.com";
+        if (string.IsNullOrWhiteSpace(accessKeyId))
+        {
+            throw new ArgumentException("AccessKeyId is required.", nameof(accessKeyId));
+        }
+
+        if (string.IsNullOrWhiteSpace(accessKeySecret))
+        {
+            throw new ArgumentException("AccessKeySecret is required.", nameof(accessKeySecret));
+        }
+
+        var resolvedEndpoint = string.IsNullOrWhiteSpace(endpoint)
+            ? "contactcenterai.cn-shanghai.aliyuncs.com"
+            : endpoint;
         services.Configure<ContactCenterAiOptions>(o =>
         {
             o.AccessKeyId = accessKeyId;
@@ -80,12 +103,10 @@ public static class ContactCenterAiServiceCollectionExtensions
             o.SecurityToken = securityToken;
         });
 
-        return services.AddContactCenterAiHttpClient(resolvedEndpoint);
+        return services.AddContactCenterAiHttpClient();
     }
 
-    private static IHttpClientBuilder AddContactCenterAiHttpClient(
-        this IServiceCollection services,
-        string endpoint)
+    private static IHttpClientBuilder AddContactCenterAiHttpClient(this IServiceCollection services)
     {
         services.AddScoped<IContactCenterAiClient>(sp =>
         {
@@ -96,10 +117,14 @@ public static class ContactCenterAiServiceCollectionExtensions
         });
 
         return services.AddHttpClient(DashScopeAspNetCoreDefaults.ContactCenterAiHttpClientName)
-            .ConfigureHttpClient((sp, h) =>
+            .ConfigureHttpClient((sp, client) =>
             {
                 var options = sp.GetRequiredService<IOptions<ContactCenterAiOptions>>().Value;
-                h.BaseAddress = new Uri($"https://{endpoint}/");
-                h.Timeout = options.Timeout;
+                var endpoint = string.IsNullOrWhiteSpace(options.Endpoint)
+                    ? "contactcenterai.cn-shanghai.aliyuncs.com"
+                    : options.Endpoint;
+                client.BaseAddress = new Uri($"https://{endpoint}/");
+                client.Timeout = options.Timeout;
             });
+    }
 }

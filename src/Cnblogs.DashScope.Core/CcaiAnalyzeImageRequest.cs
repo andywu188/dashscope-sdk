@@ -9,9 +9,11 @@ public class CcaiAnalyzeImageRequest
 {
     /// <summary>
     /// Whether to stream the response via SSE.
+    /// Defaults to <c>false</c>; sync/stream client methods overwrite this value.
     /// </summary>
     [JsonPropertyName("stream")]
     public bool Stream { get; set; }
+
     /// <summary>
     /// Image URL list.
     /// </summary>

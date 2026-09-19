@@ -1865,7 +1865,7 @@ Use `GetSpeechRecognitionAsync` / `GetSpeechRecognitionStreamAsync` for Fun-ASR-
 var response = await client.GetSpeechRecognitionAsync(
     new ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters>
     {
-        Model = "fun-asr-flash",
+        Model = "fun-asr-flash-2026-06-15", // or qwen-audio-3.0-asr-flash
         Input = new SpeechRecognitionInput
         {
             Messages = new[]
@@ -1881,7 +1881,7 @@ var response = await client.GetSpeechRecognitionAsync(
         {
             Format = "wav",
             SampleRate = "16000",
-            LanguageHints = new[] { "zh", "en" }
+            LanguageHints = new[] { "zh" } // Fun-ASR-Flash: only first hint is used
         }
     });
 Console.WriteLine(response.Output.Text);

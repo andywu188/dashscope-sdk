@@ -22,7 +22,7 @@ public class SpeechRecognitionFlashSample : SpeechSample
         var response = await client.GetSpeechRecognitionAsync(
             new ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters>
             {
-                Model = "fun-asr-flash",
+                Model = "fun-asr-flash-2026-06-15",
                 Input = new SpeechRecognitionInput
                 {
                     Messages = new[]
@@ -37,7 +37,8 @@ public class SpeechRecognitionFlashSample : SpeechSample
                 {
                     Format = "wav",
                     SampleRate = "16000",
-                    LanguageHints = new[] { "zh", "en" }
+                    // Fun-ASR-Flash only uses the first language hint.
+                    LanguageHints = new[] { "zh" }
                 }
             });
 

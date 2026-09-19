@@ -122,7 +122,7 @@ public static partial class Snapshots
                 "speech-recognition-flash",
                 new ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters>
                 {
-                    Model = "fun-asr-flash",
+                    Model = "fun-asr-flash-2026-06-15",
                     Input = new SpeechRecognitionInput
                     {
                         Messages = new[]
@@ -138,7 +138,7 @@ public static partial class Snapshots
                     {
                         Format = "wav",
                         SampleRate = "16000",
-                        LanguageHints = new[] { "zh", "en" }
+                        LanguageHints = new[] { "zh" }
                     }
                 },
                 new ModelResponse<SpeechRecognitionOutput, SpeechRecognitionUsage>

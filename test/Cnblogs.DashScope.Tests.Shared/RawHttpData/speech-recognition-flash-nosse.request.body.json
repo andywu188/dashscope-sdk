@@ -1,5 +1,5 @@
 {
-  "model": "fun-asr-flash",
+  "model": "fun-asr-flash-2026-06-15",
   "input": {
     "messages": [
       {
@@ -19,8 +19,7 @@
     "format": "wav",
     "sample_rate": "16000",
     "language_hints": [
-      "zh",
-      "en"
+      "zh"
     ]
   }
 }

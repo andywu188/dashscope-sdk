@@ -106,6 +106,44 @@ var response = await client.AnalyzeConversationAsync(
 Console.WriteLine(response.Text);
 ```
 
+已覆盖的 API：`AnalyzeConversation`、`RunCompletion` / `RunCompletionMessage`、`AnalyzeImage` / `GeneralAnalyzeImage`、`CreateTask` / `GetTaskResult`，以及热词管理（见下）。
+
+#### 热词管理（CCAI Vocab）
+
+伶鹊 CCAI 专用热词 CRUD，与百炼 ASR / `speech-biasing` 定制热词**不是同一套**，`vocabularyId` 不可混用。创建得到的 id 可传给 `CreateTask` 的 `transcription.vocabularyId`。
+
+```csharp
+// 创建
+var created = await client.CreateVocabAsync(new CcaiCreateVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    Name = "销售热词",
+    Description = "客服场景",
+    AudioModelCode = "nls",
+    WordWeightList =
+    [
+        new CcaiWordWeight { Word = "信用卡", Weight = 4 },
+        new CcaiWordWeight { Word = "分期", Weight = 3 },
+    ]
+});
+var vocabularyId = created.Data!.VocabularyId;
+
+// 查询 / 列表 / 更新 / 删除
+await client.GetVocabAsync(new CcaiGetVocabRequest { WorkspaceId = "...", VocabularyId = vocabularyId! });
+await client.ListVocabAsync(new CcaiListVocabRequest { WorkspaceId = "llm-xxxxxxxx" });
+await client.UpdateVocabAsync(new CcaiUpdateVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    VocabularyId = vocabularyId!,
+    WordWeightList = [new CcaiWordWeight { Word = "信用卡", Weight = 5 }]
+});
+await client.DeleteVocabAsync(new CcaiDeleteVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    VocabularyId = vocabularyId!
+});
+```
+
 ASP.NET Core：`builder.Services.AddContactCenterAiClient(builder.Configuration)`，配置节 `contactCenterAi`（`accessKeyId` / `accessKeySecret` / 可选 `endpoint`）。
 
 ### 使用 `Microsoft.Extensions.AI` 接口

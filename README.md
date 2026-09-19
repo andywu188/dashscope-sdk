@@ -110,6 +110,44 @@ var response = await client.AnalyzeConversationAsync(
 Console.WriteLine(response.Text);
 ```
 
+Covered APIs: `AnalyzeConversation`, `RunCompletion` / `RunCompletionMessage`, `AnalyzeImage` / `GeneralAnalyzeImage`, `CreateTask` / `GetTaskResult`, and vocabulary management (below).
+
+#### Vocabulary (CCAI hot words)
+
+LingQue CCAI vocabulary CRUD. This is **not** Bailian ASR / `speech-biasing` custom hot words — `vocabularyId` values are not interchangeable. Pass the created id to `CreateTask` as `transcription.vocabularyId`.
+
+```csharp
+// Create
+var created = await client.CreateVocabAsync(new CcaiCreateVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    Name = "sales-hotwords",
+    Description = "contact-center",
+    AudioModelCode = "nls",
+    WordWeightList =
+    [
+        new CcaiWordWeight { Word = "信用卡", Weight = 4 },
+        new CcaiWordWeight { Word = "分期", Weight = 3 },
+    ]
+});
+var vocabularyId = created.Data!.VocabularyId;
+
+// Get / List / Update / Delete
+await client.GetVocabAsync(new CcaiGetVocabRequest { WorkspaceId = "...", VocabularyId = vocabularyId! });
+await client.ListVocabAsync(new CcaiListVocabRequest { WorkspaceId = "llm-xxxxxxxx" });
+await client.UpdateVocabAsync(new CcaiUpdateVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    VocabularyId = vocabularyId!,
+    WordWeightList = [new CcaiWordWeight { Word = "信用卡", Weight = 5 }]
+});
+await client.DeleteVocabAsync(new CcaiDeleteVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    VocabularyId = vocabularyId!
+});
+```
+
 ASP.NET Core: `builder.Services.AddContactCenterAiClient(builder.Configuration)` with section `contactCenterAi` (`accessKeyId` / `accessKeySecret` / optional `endpoint`).
 
 ### Using `Microsoft.Extensions.AI` Interface

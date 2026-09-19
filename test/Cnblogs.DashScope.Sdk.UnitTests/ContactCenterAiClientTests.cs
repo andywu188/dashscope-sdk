@@ -252,6 +252,81 @@ public class ContactCenterAiClientTests
     }
 
     [Fact]
+    public async Task AnalyzeImage_Watermark_PostsImageUrlsAndResultTypesAsync()
+    {
+        var request = new CcaiAnalyzeImageRequest
+        {
+            Stream = false,
+            ImageUrls = new List<string> { "https://img.123.com/1.jpg" },
+            ResultTypes = new List<string> { CcaiImageResultTypes.Watermark }
+        };
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"img-1","success":true,"text":"[{\\\"num\\\":\\\"1\\\",\\\"isHit\\\":\\\"false\\\",\\\"remarks\\\":\\\"无水印\\\"}]","finishReason":"stop","inputTokens":1000,"outputTokens":2000,"totalTokens":3000}""");
+
+        var response = await client.AnalyzeImageAsync(WorkspaceId, AppId, request);
+
+        Assert.True(response.Success);
+        Assert.Equal(1000, response.InputTokens);
+        Assert.Contains("无水印", response.Text, StringComparison.Ordinal);
+        AssertSignedRequest(
+            handler,
+            HttpMethod.Post,
+            $"/{WorkspaceId}/ccai/app/{AppId}/analyzeImage",
+            "AnalyzeImage");
+        AssertCapturedBodyContains(bodies, "\"resultTypes\":[\"watermark\"]");
+        AssertCapturedBodyContains(bodies, "\"imageUrls\":[\"https://img.123.com/1.jpg\"]");
+        AssertCapturedBodyContains(bodies, "\"stream\":false");
+    }
+
+    [Fact]
+    public async Task GeneralAnalyzeImage_CustomPrompt_PostsExpectedBodyAsync()
+    {
+        var request = new CcaiGeneralAnalyzeImageRequest
+        {
+            Stream = false,
+            ImageUrls = new List<string> { "https://img.123.com/1.jpg" },
+            CustomPrompt = "Analyze the content in the image",
+            TemplateIds = new List<long> { 34 }
+        };
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"gimg-1","success":true,"text":"这张图片中没有可识别的文本内容。","finishReason":"stop","inputTokens":1000,"outputTokens":2000,"totalTokens":3000}""");
+
+        var response = await client.GeneralAnalyzeImageAsync(WorkspaceId, AppId, request);
+
+        Assert.Equal("gimg-1", response.RequestId);
+        Assert.Equal(3000, response.TotalTokens);
+        AssertSignedRequest(
+            handler,
+            HttpMethod.Post,
+            $"/{WorkspaceId}/ccai/app/{AppId}/generalanalyzeImage",
+            "GeneralAnalyzeImage");
+        AssertCapturedBodyContains(bodies, "\"customPrompt\":\"Analyze the content in the image\"");
+        AssertCapturedBodyContains(bodies, "\"templateIds\":[34]");
+    }
+
+    [Fact]
+    public async Task AnalyzeImageStream_ParsesSseChunksAsync()
+    {
+        var sse =
+            "data:{\"success\":true,\"text\":\"检测\",\"finishReason\":null}\n\n" +
+            "data:{\"success\":true,\"text\":\"完成\",\"finishReason\":\"stop\",\"requestId\":\"img-sse\"}\n\n";
+        var (client, _, _) = CreateClient(sse, "text/event-stream");
+        var request = new CcaiAnalyzeImageRequest
+        {
+            Stream = true,
+            ImageUrls = new List<string> { "https://img.123.com/1.jpg" },
+            ResultTypes = new List<string> { CcaiImageResultTypes.Watermark }
+        };
+
+        var chunks = await client.AnalyzeImageStreamAsync(WorkspaceId, AppId, request).ToListAsync();
+
+        Assert.Equal(2, chunks.Count);
+        Assert.Equal("检测", chunks[0].Text);
+        Assert.Equal("完成", chunks[1].Text);
+        Assert.Equal("stop", chunks[1].FinishReason);
+    }
+
+    [Fact]
     public async Task AnalyzeConversation_HttpError_ThrowsContactCenterAiExceptionAsync()
     {
         var (client, _, _) = CreateClient(

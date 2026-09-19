@@ -18,7 +18,6 @@
 
 ## 非目标（本期不做）
 
-- AnalyzeImage / GeneralAnalyzeImage
 - AnalyzeAudioSync（文档标注不推荐）
 - 百炼 ASR / `speech-biasing` 定制热词（与 CCAI Vocab **不是同一套**，`vocabularyId` 不可混用）
 - 依赖官方 Tea/`Aliyun.SDK` NuGet（自研 ACS3，避免额外重量级依赖）
@@ -53,8 +52,9 @@ HttpClient → contactcenterai.cn-shanghai.aliyuncs.com
 1. **AnalyzeConversation**（同步 + SSE）——对应质检 / 字段抽取 / 摘要最佳实践
 2. **RunCompletion**（同步 + SSE）——按模板 ID 调用
 3. **RunCompletionMessage**（同步 + SSE）——原生 Prompt / Message 协议调用
-4. **CreateTask** / **GetTaskResult**——离线异步任务
-5. **热词管理**（Create/Update/List/Delete/GetVocab）——伶鹊 CCAI 专用；创建得到的 `vocabularyId` 可传给 `CreateTask.transcription.vocabularyId`
+4. **AnalyzeImage** / **GeneralAnalyzeImage**（同步 + SSE）——图片水印检测与通用图片分析
+5. **CreateTask** / **GetTaskResult**——离线异步任务
+6. **热词管理**（Create/Update/List/Delete/GetVocab）——伶鹊 CCAI 专用；创建得到的 `vocabularyId` 可传给 `CreateTask.transcription.vocabularyId`
 
 ### 模型约定
 

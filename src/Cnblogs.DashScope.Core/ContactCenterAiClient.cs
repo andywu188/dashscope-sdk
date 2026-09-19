@@ -165,6 +165,88 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
     }
 
     /// <inheritdoc />
+    public Task<CcaiAnalyzeImageResponse> AnalyzeImageAsync(
+        string workspaceId,
+        string appId,
+        CcaiAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotEmpty(workspaceId, nameof(workspaceId));
+        EnsureNotEmpty(appId, nameof(appId));
+        ArgumentNullException.ThrowIfNull(request);
+        request.Stream = false;
+
+        return SendAsync<CcaiAnalyzeImageRequest, CcaiAnalyzeImageResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.AnalyzeImage(workspaceId, appId),
+            "AnalyzeImage",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public IAsyncEnumerable<CcaiAnalyzeImageResponse> AnalyzeImageStreamAsync(
+        string workspaceId,
+        string appId,
+        CcaiAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotEmpty(workspaceId, nameof(workspaceId));
+        EnsureNotEmpty(appId, nameof(appId));
+        ArgumentNullException.ThrowIfNull(request);
+        request.Stream = true;
+
+        return StreamAsync<CcaiAnalyzeImageRequest, CcaiAnalyzeImageResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.AnalyzeImage(workspaceId, appId),
+            "AnalyzeImage",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CcaiAnalyzeImageResponse> GeneralAnalyzeImageAsync(
+        string workspaceId,
+        string appId,
+        CcaiGeneralAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotEmpty(workspaceId, nameof(workspaceId));
+        EnsureNotEmpty(appId, nameof(appId));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.ImageUrls);
+        request.Stream = false;
+
+        return SendAsync<CcaiGeneralAnalyzeImageRequest, CcaiAnalyzeImageResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.GeneralAnalyzeImage(workspaceId, appId),
+            "GeneralAnalyzeImage",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public IAsyncEnumerable<CcaiAnalyzeImageResponse> GeneralAnalyzeImageStreamAsync(
+        string workspaceId,
+        string appId,
+        CcaiGeneralAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotEmpty(workspaceId, nameof(workspaceId));
+        EnsureNotEmpty(appId, nameof(appId));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.ImageUrls);
+        request.Stream = true;
+
+        return StreamAsync<CcaiGeneralAnalyzeImageRequest, CcaiAnalyzeImageResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.GeneralAnalyzeImage(workspaceId, appId),
+            "GeneralAnalyzeImage",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<CcaiCreateTaskResponse> CreateTaskAsync(
         string workspaceId,
         string appId,

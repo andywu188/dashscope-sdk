@@ -89,6 +89,58 @@ public interface IContactCenterAiClient
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Analyzes images (e.g. watermark detection).
+    /// </summary>
+    /// <param name="workspaceId">Workspace id.</param>
+    /// <param name="appId">Application id.</param>
+    /// <param name="request">Request body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CcaiAnalyzeImageResponse> AnalyzeImageAsync(
+        string workspaceId,
+        string appId,
+        CcaiAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Streams AnalyzeImage results via SSE.
+    /// </summary>
+    /// <param name="workspaceId">Workspace id.</param>
+    /// <param name="appId">Application id.</param>
+    /// <param name="request">Request body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    IAsyncEnumerable<CcaiAnalyzeImageResponse> AnalyzeImageStreamAsync(
+        string workspaceId,
+        string appId,
+        CcaiAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Runs general image analysis with custom prompt or template ids.
+    /// </summary>
+    /// <param name="workspaceId">Workspace id.</param>
+    /// <param name="appId">Application id.</param>
+    /// <param name="request">Request body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CcaiAnalyzeImageResponse> GeneralAnalyzeImageAsync(
+        string workspaceId,
+        string appId,
+        CcaiGeneralAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Streams GeneralAnalyzeImage results via SSE.
+    /// </summary>
+    /// <param name="workspaceId">Workspace id.</param>
+    /// <param name="appId">Application id.</param>
+    /// <param name="request">Request body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    IAsyncEnumerable<CcaiAnalyzeImageResponse> GeneralAnalyzeImageStreamAsync(
+        string workspaceId,
+        string appId,
+        CcaiGeneralAnalyzeImageRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates an offline analysis task.
     /// </summary>
     /// <param name="workspaceId">Workspace id.</param>

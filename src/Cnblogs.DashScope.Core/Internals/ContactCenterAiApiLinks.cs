@@ -11,6 +11,12 @@ internal static class ContactCenterAiApiLinks
     public static string RunCompletionMessage(string workspaceId, string appId)
         => $"/{workspaceId}/ccai/app/{appId}/completion_message";
 
+    public static string AnalyzeImage(string workspaceId, string appId)
+        => $"/{workspaceId}/ccai/app/{appId}/analyzeImage";
+
+    public static string GeneralAnalyzeImage(string workspaceId, string appId)
+        => $"/{workspaceId}/ccai/app/{appId}/generalanalyzeImage";
+
     public static string CreateTask(string workspaceId, string appId)
         => $"/{workspaceId}/ccai/app/{appId}/createTask";
 

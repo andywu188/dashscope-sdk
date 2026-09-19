@@ -1819,7 +1819,7 @@ Usage: in(160)/out(514)/audio(152)/total(674)
 
 Dedicated speech recognition APIs (separate from multimodal [Audio Understanding](#audio-understanding) and `AsrOptions` on multimodal parameters).
 
-Official guide: [非实时语音识别 - 支持的模型与地域](https://docs.bailian.console.aliyun.com/zh/model-studio/non-realtime-speech-recognition-user-guide#%E6%94%AF%E6%8C%81%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%9C%B0%E5%9F%9F).
+Official guide: [Non-realtime speech recognition - Supported models and regions](https://docs.bailian.console.aliyun.com/zh/model-studio/non-realtime-speech-recognition-user-guide#%E6%94%AF%E6%8C%81%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%9C%B0%E5%9F%9F).
 
 ### Supported Models and Regions
 

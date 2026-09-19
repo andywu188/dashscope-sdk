@@ -208,6 +208,7 @@ Console.WriteLine($"Image token usage: {raw?.Usage?.ImageTokens}");
   - [GUI](#gui)
   - [Audio Understanding](#audio-understanding)
 - [Speech Recognition](#speech-recognition) - Paraformer / Fun-ASR file transcription and Fun-ASR-Flash recognition
+  - [Supported Models and Regions](#supported-models-and-regions)
   - [Asynchronous File Transcription](#asynchronous-file-transcription)
   - [Flash Recognition](#flash-recognition)
   - [Speech Vocabulary](#speech-vocabulary)
@@ -1818,15 +1819,33 @@ Usage: in(160)/out(514)/audio(152)/total(674)
 
 Dedicated speech recognition APIs (separate from multimodal [Audio Understanding](#audio-understanding) and `AsrOptions` on multimodal parameters).
 
+Official guide: [非实时语音识别 - 支持的模型与地域](https://docs.bailian.console.aliyun.com/zh/model-studio/non-realtime-speech-recognition-user-guide#%E6%94%AF%E6%8C%81%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%9C%B0%E5%9F%9F).
+
+### Supported Models and Regions
+
+Use the matching regional API Key / base address. Model availability differs by region.
+
+| Call mode | Series | Example model ids | Beijing | Singapore | US (Virginia) |
+|-----------|--------|-------------------|---------|------------|---------------|
+| Async file transcription (`CreateSpeechTranscriptionTaskAsync`) | Qwen-Audio-3.0-ASR-Flash-Filetrans | `qwen-audio-3.0-asr-flash-filetrans` | Yes | Yes | No |
+| Async | Fun-ASR | `fun-asr`, `fun-asr-2025-11-07`, `fun-asr-mtl`, ... | Yes | Yes | No |
+| Async | Qwen3-ASR-Flash-Filetrans | `qwen3-asr-flash-filetrans`, `qwen3-asr-flash-filetrans-2025-11-17` | Yes | Yes | No |
+| Async | Paraformer | `paraformer-v2`, `paraformer-8k-v2`, `paraformer-v1`, ... | Yes | No | No |
+| Sync / SSE flash (`GetSpeechRecognitionAsync`) | Qwen-Audio-3.0-ASR-Flash | `qwen-audio-3.0-asr-flash` | Yes | Yes | No |
+| Sync / SSE | Fun-ASR-Flash | `fun-asr-flash-2026-06-15` | Yes | Yes | No |
+| Sync / SSE | Qwen3-ASR-Flash | `qwen3-asr-flash`, `qwen3-asr-flash-2026-02-10`, ... | Yes | Yes | Yes (`qwen3-asr-flash` / `qwen3-asr-flash-2025-09-08`) |
+
+Selection tip from the official guide: prefer flash/sync models for audio under ~5 minutes; use filetrans/async models for longer recordings.
+
 ### Asynchronous File Transcription
 
-Use `CreateSpeechTranscriptionTaskAsync` + `GetSpeechTranscriptionTaskAsync` for Paraformer / Fun-ASR / Qwen-Audio filetrans models. Poll until the task finishes, then download the result JSON with `GetSpeechTranscriptionResultAsync`.
+Use `CreateSpeechTranscriptionTaskAsync` + `GetSpeechTranscriptionTaskAsync` for Paraformer / Fun-ASR / Qwen-Audio / Qwen3 filetrans models. Poll until the task finishes, then download the result JSON with `GetSpeechTranscriptionResultAsync`.
 
 ```csharp
 var submit = await client.CreateSpeechTranscriptionTaskAsync(
     new ModelRequest<SpeechTranscriptionInput, ISpeechTranscriptionParameters>
     {
-        Model = "paraformer-v2",
+        Model = "paraformer-v2", // or fun-asr / qwen-audio-3.0-asr-flash-filetrans / qwen3-asr-flash-filetrans
         Input = new SpeechTranscriptionInput
         {
             FileUrls = new[] { "https://example.com/audio.wav" }
@@ -1859,13 +1878,13 @@ Notes:
 
 ### Flash Recognition
 
-Use `GetSpeechRecognitionAsync` / `GetSpeechRecognitionStreamAsync` for Fun-ASR-Flash / Qwen-Audio-3.0-ASR-Flash. These call the multimodal-generation endpoint with a dedicated message schema (`type` / `input_audio`), not `MultimodalMessage`.
+Use `GetSpeechRecognitionAsync` / `GetSpeechRecognitionStreamAsync` for Fun-ASR-Flash / Qwen-Audio-3.0-ASR-Flash / Qwen3-ASR-Flash. These call the multimodal-generation endpoint with a dedicated message schema (`type` / `input_audio`), not `MultimodalMessage`.
 
 ```csharp
 var response = await client.GetSpeechRecognitionAsync(
     new ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters>
     {
-        Model = "fun-asr-flash-2026-06-15", // or qwen-audio-3.0-asr-flash
+        Model = "fun-asr-flash-2026-06-15", // or qwen-audio-3.0-asr-flash / qwen3-asr-flash
         Input = new SpeechRecognitionInput
         {
             Messages = new[]

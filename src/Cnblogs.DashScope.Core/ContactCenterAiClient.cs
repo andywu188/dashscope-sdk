@@ -168,6 +168,91 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
     }
 
     /// <inheritdoc />
+    public Task<CcaiCreateVocabResponse> CreateVocabAsync(
+        CcaiCreateVocabRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EnsureNotEmpty(request.WorkspaceId, nameof(request.WorkspaceId));
+        EnsureNotEmpty(request.Name, nameof(request.Name));
+        ArgumentNullException.ThrowIfNull(request.WordWeightList);
+
+        return SendAsync<CcaiCreateVocabRequest, CcaiCreateVocabResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.CreateVocab,
+            "CreateVocab",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CcaiVocabMutationResponse> UpdateVocabAsync(
+        CcaiUpdateVocabRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EnsureNotEmpty(request.WorkspaceId, nameof(request.WorkspaceId));
+        EnsureNotEmpty(request.VocabularyId, nameof(request.VocabularyId));
+
+        return SendAsync<CcaiUpdateVocabRequest, CcaiVocabMutationResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.UpdateVocab,
+            "UpdateVocab",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CcaiListVocabResponse> ListVocabAsync(
+        CcaiListVocabRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EnsureNotEmpty(request.WorkspaceId, nameof(request.WorkspaceId));
+
+        return SendAsync<CcaiListVocabRequest, CcaiListVocabResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.ListVocab,
+            "ListVocab",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CcaiVocabMutationResponse> DeleteVocabAsync(
+        CcaiDeleteVocabRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EnsureNotEmpty(request.WorkspaceId, nameof(request.WorkspaceId));
+        EnsureNotEmpty(request.VocabularyId, nameof(request.VocabularyId));
+
+        return SendAsync<CcaiDeleteVocabRequest, CcaiVocabMutationResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.DeleteVocab,
+            "DeleteVocab",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CcaiGetVocabResponse> GetVocabAsync(
+        CcaiGetVocabRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EnsureNotEmpty(request.WorkspaceId, nameof(request.WorkspaceId));
+        EnsureNotEmpty(request.VocabularyId, nameof(request.VocabularyId));
+
+        return SendAsync<CcaiGetVocabRequest, CcaiGetVocabResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.GetVocab,
+            "GetVocab",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_disposeHttpClient)

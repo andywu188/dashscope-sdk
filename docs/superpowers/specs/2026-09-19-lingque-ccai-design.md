@@ -18,9 +18,9 @@
 
 ## 非目标（本期不做）
 
-- 热词管理（Create/Update/List/Delete/GetVocab）——与百炼非实时 ASR 的 `speech-biasing` 定制热词**不是同一套**（不同 Endpoint/鉴权/词表 ID，不可混用）
 - AnalyzeImage / GeneralAnalyzeImage
 - AnalyzeAudioSync（文档标注不推荐）
+- 百炼 ASR / `speech-biasing` 定制热词（与 CCAI Vocab **不是同一套**，`vocabularyId` 不可混用）
 - 依赖官方 Tea/`Aliyun.SDK` NuGet（自研 ACS3，避免额外重量级依赖）
 
 ## 方案对比
@@ -53,6 +53,7 @@ HttpClient → contactcenterai.cn-shanghai.aliyuncs.com
 1. **AnalyzeConversation**（同步 + SSE）——对应质检 / 字段抽取 / 摘要最佳实践
 2. **RunCompletion**（同步 + SSE）——按模板 ID 调用
 3. **CreateTask** / **GetTaskResult**——离线异步任务
+4. **热词管理**（Create/Update/List/Delete/GetVocab）——伶鹊 CCAI 专用；创建得到的 `vocabularyId` 可传给 `CreateTask.transcription.vocabularyId`
 
 ### 模型约定
 
@@ -75,6 +76,7 @@ HTTP 非成功时抛出 `ContactCenterAiException`（含 status、requestId、er
 1. **Acs3SignerTests**：固定 AK/SK、日期、nonce、body，断言 CanonicalRequest / Signature / Authorization
 2. **AnalyzeConversationSerializationTests**：质检 / 字段 / 摘要三类请求体与响应反序列化（对齐现有 Snapshot + MockHttp 模式）
 3. **CreateTask / GetTaskResult / RunCompletion**：请求路径、方法、body/query 断言
+4. **Vocab CRUD**：Create/Update/List/Get/Delete 路径、body 与响应反序列化
 
 ## 文档与命名
 

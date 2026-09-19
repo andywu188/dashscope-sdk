@@ -240,6 +240,102 @@ public class ContactCenterAiClientTests
                 }).ResultTypes);
     }
 
+    [Fact]
+    public async Task CreateVocab_PostsWordWeightListAndReturnsVocabularyIdAsync()
+    {
+        var request = new CcaiCreateVocabRequest
+        {
+            WorkspaceId = WorkspaceId,
+            Name = "销售词表",
+            Description = "东北一区销售业务专用",
+            WordWeightList = new List<CcaiWordWeight>
+            {
+                new() { Word = "儿童", Weight = 3 },
+                new() { Word = "金属", Weight = 3 }
+            }
+        };
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"req-vocab","success":"True","data":{"vocabularyId":"f3d82*******7"}}""");
+
+        var response = await client.CreateVocabAsync(request);
+
+        Assert.Equal("f3d82*******7", response.Data?.VocabularyId);
+        AssertSignedRequest(handler, HttpMethod.Post, "/vocab/createVocab", "CreateVocab");
+        AssertCapturedBodyContains(bodies, "\"workspaceId\":\"ws-demo\"");
+        AssertCapturedBodyContains(bodies, "\"word\":\"儿童\"");
+        AssertCapturedBodyContains(bodies, "\"weight\":3");
+    }
+
+    [Fact]
+    public async Task UpdateVocab_PostsVocabularyIdAndWordsAsync()
+    {
+        var request = new CcaiUpdateVocabRequest
+        {
+            WorkspaceId = WorkspaceId,
+            VocabularyId = "f3d82e0d********d23bd7",
+            Name = "销售热词",
+            Description = "南方一区销售热词",
+            WordWeightList = new List<CcaiWordWeight>
+            {
+                new() { Word = "欧洲", Weight = 4 },
+                new() { Word = "耳痛", Weight = 2 }
+            }
+        };
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"req-upd","success":true,"data":true}""");
+
+        var response = await client.UpdateVocabAsync(request);
+
+        Assert.NotNull(response.Data);
+        AssertSignedRequest(handler, HttpMethod.Post, "/vocab/updateVocab", "UpdateVocab");
+        AssertCapturedBodyContains(bodies, "\"vocabularyId\":\"f3d82e0d********d23bd7\"");
+        AssertCapturedBodyContains(bodies, "\"word\":\"欧洲\"");
+    }
+
+    [Fact]
+    public async Task ListVocab_DeserializesVocabularyArrayAsync()
+    {
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"req-list","success":true,"data":[{"vocabularyId":"dv*****erverve","name":"热词1","description":"销售热词","audioModelCode":"nls","wordWeightList":[{"word":"儿童","weight":3}]}]}""");
+
+        var response = await client.ListVocabAsync(new CcaiListVocabRequest { WorkspaceId = WorkspaceId });
+
+        Assert.Single(response.Data!);
+        Assert.Equal("热词1", response.Data![0].Name);
+        Assert.Equal("儿童", response.Data[0].WordWeightList![0].Word);
+        AssertSignedRequest(handler, HttpMethod.Post, "/vocab/listVocab", "ListVocab");
+        AssertCapturedBodyContains(bodies, "\"workspaceId\":\"ws-demo\"");
+    }
+
+    [Fact]
+    public async Task GetVocab_ReturnsVocabularyDetailAsync()
+    {
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"req-get","success":true,"data":{"vocabularyId":"rrbe***jrvrdd","name":"热词1","description":"销售热词","audioModelCode":"nls","wordWeightList":[{"word":"儿童","weight":1}]}}""");
+
+        var response = await client.GetVocabAsync(
+            new CcaiGetVocabRequest { WorkspaceId = WorkspaceId, VocabularyId = "rrbe***jrvrdd" });
+
+        Assert.Equal("rrbe***jrvrdd", response.Data?.VocabularyId);
+        Assert.Equal(1, response.Data?.WordWeightList?[0].Weight);
+        AssertSignedRequest(handler, HttpMethod.Post, "/vocab/getVocab", "GetVocab");
+        AssertCapturedBodyContains(bodies, "\"vocabularyId\":\"rrbe***jrvrdd\"");
+    }
+
+    [Fact]
+    public async Task DeleteVocab_PostsIdsAsync()
+    {
+        var (client, handler, bodies) = CreateClient(
+            """{"requestId":"req-del","success":true,"data":true}""");
+
+        var response = await client.DeleteVocabAsync(
+            new CcaiDeleteVocabRequest { WorkspaceId = WorkspaceId, VocabularyId = "81a3*********2d7c8" });
+
+        Assert.NotNull(response.Data);
+        AssertSignedRequest(handler, HttpMethod.Post, "/vocab/deleteVocab", "DeleteVocab");
+        AssertCapturedBodyContains(bodies, "\"vocabularyId\":\"81a3*********2d7c8\"");
+    }
+
     private static CcaiDialogue CreateSampleDialogue()
         => new()
         {

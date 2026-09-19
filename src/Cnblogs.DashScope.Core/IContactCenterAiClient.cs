@@ -84,4 +84,50 @@ public interface IContactCenterAiClient
         string taskId,
         IEnumerable<string>? requiredFieldList = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a hot-word vocabulary for LingQue CCAI speech transcription.
+    /// </summary>
+    /// <param name="request">Create request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created vocabulary id.</returns>
+    Task<CcaiCreateVocabResponse> CreateVocabAsync(
+        CcaiCreateVocabRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing hot-word vocabulary.
+    /// </summary>
+    /// <param name="request">Update request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CcaiVocabMutationResponse> UpdateVocabAsync(
+        CcaiUpdateVocabRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists hot-word vocabularies in a workspace.
+    /// </summary>
+    /// <param name="request">List request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CcaiListVocabResponse> ListVocabAsync(
+        CcaiListVocabRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a hot-word vocabulary.
+    /// </summary>
+    /// <param name="request">Delete request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CcaiVocabMutationResponse> DeleteVocabAsync(
+        CcaiDeleteVocabRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a hot-word vocabulary by id.
+    /// </summary>
+    /// <param name="request">Get request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CcaiGetVocabResponse> GetVocabAsync(
+        CcaiGetVocabRequest request,
+        CancellationToken cancellationToken = default);
 }

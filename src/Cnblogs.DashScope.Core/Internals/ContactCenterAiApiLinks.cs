@@ -12,4 +12,10 @@ internal static class ContactCenterAiApiLinks
         => $"/{workspaceId}/ccai/app/{appId}/createTask";
 
     public const string GetTaskResult = "/ccai/app/getTaskResult";
+
+    public const string CreateVocab = "/vocab/createVocab";
+    public const string UpdateVocab = "/vocab/updateVocab";
+    public const string ListVocab = "/vocab/listVocab";
+    public const string DeleteVocab = "/vocab/deleteVocab";
+    public const string GetVocab = "/vocab/getVocab";
 }

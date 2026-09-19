@@ -30,10 +30,18 @@ public static class ContactCenterAiServiceCollectionExtensions
         this IServiceCollection services,
         IConfigurationSection section)
     {
-        _ = section["accessKeyId"]
-            ?? throw new InvalidOperationException("There is no accessKeyId provided in given section");
-        _ = section["accessKeySecret"]
-            ?? throw new InvalidOperationException("There is no accessKeySecret provided in given section");
+        var accessKeyId = section["accessKeyId"];
+        if (string.IsNullOrWhiteSpace(accessKeyId))
+        {
+            throw new InvalidOperationException("There is no accessKeyId provided in given section");
+        }
+
+        var accessKeySecret = section["accessKeySecret"];
+        if (string.IsNullOrWhiteSpace(accessKeySecret))
+        {
+            throw new InvalidOperationException("There is no accessKeySecret provided in given section");
+        }
+
         var endpoint = section["endpoint"] ?? "contactcenterai.cn-shanghai.aliyuncs.com";
 
         services.Configure<ContactCenterAiOptions>(section);

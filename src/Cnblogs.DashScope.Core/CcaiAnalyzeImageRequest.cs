@@ -11,8 +11,7 @@ public class CcaiAnalyzeImageRequest
     /// Whether to stream the response via SSE.
     /// </summary>
     [JsonPropertyName("stream")]
-    public required bool Stream { get; set; }
-
+    public bool Stream { get; set; }
     /// <summary>
     /// Image URL list.
     /// </summary>

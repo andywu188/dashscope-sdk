@@ -33,6 +33,8 @@ public class AnalyzeConversationResponse
 
     /// <summary>
     /// Whether the request succeeded.
+    /// Live AnalyzeConversation responses often omit this field; treat non-empty <see cref="Text"/>
+    /// with <see cref="FinishReason"/> <c>stop</c> as success when this is null.
     /// </summary>
     [JsonPropertyName("success")]
     public bool? Success { get; set; }

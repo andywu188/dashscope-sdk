@@ -81,6 +81,37 @@ public class YourService(IDashScopeClient client)
     }
 }
 ```
+
+### LingQue CCAI Conversation Analysis AIO
+
+Use the separate `IContactCenterAiClient` (ACS3 AccessKey auth). This is **not** the DashScope `sk-` API Key flow.
+
+```csharp
+using var client = new ContactCenterAiClient(new ContactCenterAiOptions
+{
+    AccessKeyId = "your-ak",
+    AccessKeySecret = "your-sk",
+    // Default endpoint: contactcenterai.cn-shanghai.aliyuncs.com
+    // Do not use Bailian workspace API Host (*.maas.aliyuncs.com)
+});
+
+var response = await client.AnalyzeConversationAsync(
+    workspaceId: "llm-xxxxxxxx",
+    appId: "your-ccai-app-id",
+    AnalyzeConversationRequest.ForSummary(new CcaiDialogue
+    {
+        SessionId = "s1",
+        Sentences =
+        [
+            new CcaiSentence { Role = "user", Text = "我想办信用卡" },
+            new CcaiSentence { Role = "agent", Text = "好的，请提供姓名和手机号" },
+        ]
+    }));
+Console.WriteLine(response.Text);
+```
+
+ASP.NET Core: `builder.Services.AddContactCenterAiClient(builder.Configuration)` with section `contactCenterAi` (`accessKeyId` / `accessKeySecret` / optional `endpoint`).
+
 ### Using `Microsoft.Extensions.AI` Interface
 
 Install NuGet package `Cnblogs.DashScope.AI`

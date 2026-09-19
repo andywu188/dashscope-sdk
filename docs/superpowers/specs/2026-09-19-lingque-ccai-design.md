@@ -6,9 +6,11 @@
 
 阿里云 ContactCenterAI (`2024-06-03`) 提供对话分析能力，与现有 DashScope Bearer API Key 调用不同：
 
-- Endpoint：`contactcenterai.cn-shanghai.aliyuncs.com`
-- 鉴权：AccessKey + ACS3-HMAC-SHA256（ROA）
+- Endpoint：`contactcenterai.cn-shanghai.aliyuncs.com`（公网上海；已用真实 AK/SK 联调通过）
+- 鉴权：AccessKey + ACS3-HMAC-SHA256（ROA），**不能**用 DashScope `sk-` API Key
 - 路径形如：`/{workspaceId}/ccai/app/{appId}/analyze_conversation`
+
+**易混淆点（联调结论）：** 百炼业务空间控制台里的「API Host」（形如 `{workspaceId}.cn-beijing.maas.aliyuncs.com`）是 DashScope/MaaS 应用调用入口，**不是**伶鹊 CCAI ROA Endpoint。对该 Host 请求 `/ccai/...` 会 404；`/api/v1/apps/{appId}/completion` 属于百炼应用协议。CCAI 请始终使用 `contactcenterai.cn-shanghai.aliyuncs.com` + AK/SK。
 
 官方最佳实践中的服务质检、字段抽取、摘要/标题/关键词，均通过 `AnalyzeConversation` 的 `resultTypes` 完成。
 

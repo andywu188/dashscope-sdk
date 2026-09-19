@@ -78,6 +78,36 @@ public class YourService(IDashScopeClient client)
 }
 ```
 
+### 伶鹊 CCAI-对话分析 AIO
+
+对话分析走独立的 `IContactCenterAiClient`（ACS3 AccessKey 鉴权），与 DashScope `sk-` API Key **不是同一套**。
+
+```csharp
+using var client = new ContactCenterAiClient(new ContactCenterAiOptions
+{
+    AccessKeyId = "your-ak",
+    AccessKeySecret = "your-sk",
+    // Endpoint 默认 contactcenterai.cn-shanghai.aliyuncs.com
+    // 不要填百炼业务空间 API Host（*.maas.aliyuncs.com）
+});
+
+var response = await client.AnalyzeConversationAsync(
+    workspaceId: "llm-xxxxxxxx",
+    appId: "your-ccai-app-id",
+    AnalyzeConversationRequest.ForSummary(new CcaiDialogue
+    {
+        SessionId = "s1",
+        Sentences =
+        [
+            new CcaiSentence { Role = "user", Text = "我想办信用卡" },
+            new CcaiSentence { Role = "agent", Text = "好的，请提供姓名和手机号" },
+        ]
+    }));
+Console.WriteLine(response.Text);
+```
+
+ASP.NET Core：`builder.Services.AddContactCenterAiClient(builder.Configuration)`，配置节 `contactCenterAi`（`accessKeyId` / `accessKeySecret` / 可选 `endpoint`）。
+
 ### 使用 `Microsoft.Extensions.AI` 接口
 
 安装 NuGet 包 `Cnblogs.DashScope.AI`

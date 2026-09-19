@@ -1,4 +1,4 @@
-﻿[English](https://github.com/cnblogs/dashscope-sdk/blob/main/README.md) | 简体中文
+[English](./README.md) | 简体中文
 
 # Cnblogs.DashScopeSDK
 

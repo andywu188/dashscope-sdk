@@ -37,6 +37,30 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
 
     private ContactCenterAiClient(HttpClient httpClient, ContactCenterAiOptions options, bool disposeHttpClient)
     {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(options);
+        if (httpClient.BaseAddress is null)
+        {
+            throw new ArgumentException("HttpClient.BaseAddress must be set to https://{endpoint}/.", nameof(httpClient));
+        }
+
+        if (string.IsNullOrWhiteSpace(options.AccessKeyId))
+        {
+            throw new ArgumentException("AccessKeyId is required.", nameof(options));
+        }
+
+        if (string.IsNullOrWhiteSpace(options.AccessKeySecret))
+        {
+            throw new ArgumentException("AccessKeySecret is required.", nameof(options));
+        }
+
+        if (!string.Equals(httpClient.BaseAddress.Host, options.Endpoint, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                $"HttpClient.BaseAddress host '{httpClient.BaseAddress.Host}' must match options.Endpoint '{options.Endpoint}'.",
+                nameof(httpClient));
+        }
+
         _httpClient = httpClient;
         _options = options;
         _disposeHttpClient = disposeHttpClient;

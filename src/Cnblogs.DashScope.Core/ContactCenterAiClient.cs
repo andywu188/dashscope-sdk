@@ -123,6 +123,48 @@ public sealed class ContactCenterAiClient : IContactCenterAiClient, IDisposable
     }
 
     /// <inheritdoc />
+    public Task<CcaiRunCompletionResponse> RunCompletionMessageAsync(
+        string workspaceId,
+        string appId,
+        CcaiRunCompletionMessageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotEmpty(workspaceId, nameof(workspaceId));
+        EnsureNotEmpty(appId, nameof(appId));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Messages);
+        request.Stream = false;
+
+        return SendAsync<CcaiRunCompletionMessageRequest, CcaiRunCompletionResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.RunCompletionMessage(workspaceId, appId),
+            "RunCompletionMessage",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public IAsyncEnumerable<CcaiRunCompletionResponse> RunCompletionMessageStreamAsync(
+        string workspaceId,
+        string appId,
+        CcaiRunCompletionMessageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotEmpty(workspaceId, nameof(workspaceId));
+        EnsureNotEmpty(appId, nameof(appId));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Messages);
+        request.Stream = true;
+
+        return StreamAsync<CcaiRunCompletionMessageRequest, CcaiRunCompletionResponse>(
+            HttpMethod.Post,
+            ContactCenterAiApiLinks.RunCompletionMessage(workspaceId, appId),
+            "RunCompletionMessage",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<CcaiCreateTaskResponse> CreateTaskAsync(
         string workspaceId,
         string appId,

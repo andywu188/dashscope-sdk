@@ -195,6 +195,63 @@ public class ContactCenterAiClientTests
     }
 
     [Fact]
+    public async Task RunCompletionMessage_UsesPascalCaseMessagesBodyAsync()
+    {
+        var request = new CcaiRunCompletionMessageRequest
+        {
+            ModelCode = "tyxmTurbo",
+            Stream = false,
+            Messages = new List<CcaiCompletionMessage>
+            {
+                new() { Role = "system", Content = "You are a helpful assistant." },
+                new()
+                {
+                    Role = "user",
+                    Content = "请阅读以下对话内容，按照要求执行指令任务。"
+                }
+            }
+        };
+        var (client, handler, bodies) = CreateClient(
+            """{"FinishReason":"stop","RequestId":"msg-1","Text":"摘要结果","inputTokens":"1","outputTokens":"2","totalTokens":"3"}""");
+
+        var response = await client.RunCompletionMessageAsync(WorkspaceId, AppId, request);
+
+        Assert.Equal("摘要结果", response.Text);
+        Assert.Equal("stop", response.FinishReason);
+        AssertSignedRequest(
+            handler,
+            HttpMethod.Post,
+            $"/{WorkspaceId}/ccai/app/{AppId}/completion_message",
+            "RunCompletionMessage");
+        AssertCapturedBodyContains(bodies, "\"Messages\":[");
+        AssertCapturedBodyContains(bodies, "\"Role\":\"system\"");
+        AssertCapturedBodyContains(bodies, "\"Content\":\"You are a helpful assistant.\"");
+    }
+
+    [Fact]
+    public async Task RunCompletionMessageStream_ParsesSseChunksAsync()
+    {
+        var sse =
+            "data:{\"FinishReason\":null,\"Text\":\"部\"}\n\n" +
+            "data:{\"FinishReason\":\"stop\",\"RequestId\":\"msg-sse\",\"Text\":\"分摘要\"}\n\n";
+        var (client, _, _) = CreateClient(sse, "text/event-stream");
+        var request = new CcaiRunCompletionMessageRequest
+        {
+            Messages = new List<CcaiCompletionMessage>
+            {
+                new() { Role = "user", Content = "总结对话" }
+            }
+        };
+
+        var chunks = await client.RunCompletionMessageStreamAsync(WorkspaceId, AppId, request).ToListAsync();
+
+        Assert.Equal(2, chunks.Count);
+        Assert.Equal("部", chunks[0].Text);
+        Assert.Equal("分摘要", chunks[1].Text);
+        Assert.Equal("stop", chunks[1].FinishReason);
+    }
+
+    [Fact]
     public async Task AnalyzeConversation_HttpError_ThrowsContactCenterAiExceptionAsync()
     {
         var (client, _, _) = CreateClient(

@@ -61,6 +61,34 @@ public interface IContactCenterAiClient
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Invokes a CCAI application with native prompt messages (RunCompletionMessage).
+    /// </summary>
+    /// <param name="workspaceId">Workspace id.</param>
+    /// <param name="appId">Application id.</param>
+    /// <param name="request">Message-protocol request body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Completion response.</returns>
+    Task<CcaiRunCompletionResponse> RunCompletionMessageAsync(
+        string workspaceId,
+        string appId,
+        CcaiRunCompletionMessageRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Streams RunCompletionMessage results via SSE.
+    /// </summary>
+    /// <param name="workspaceId">Workspace id.</param>
+    /// <param name="appId">Application id.</param>
+    /// <param name="request">Message-protocol request body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>SSE chunks.</returns>
+    IAsyncEnumerable<CcaiRunCompletionResponse> RunCompletionMessageStreamAsync(
+        string workspaceId,
+        string appId,
+        CcaiRunCompletionMessageRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates an offline analysis task.
     /// </summary>
     /// <param name="workspaceId">Workspace id.</param>

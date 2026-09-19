@@ -2141,10 +2141,6 @@ var embedding = response.Output.Embeddings.First().Embedding;
 Console.WriteLine($"Embedding vector length: {embedding.Length}");
 ```
 
-See [Snapshot Files](./test/Cnblogs.DashScope.Tests.Shared/Utils/Snapshots.cs) for API parameter examples.
-
-Review [Tests](./test) for comprehensive usage examples.
-
 ## LingQue CCAI Conversation Analysis AIO
 
 Use the separate `IContactCenterAiClient` (ACS3 AccessKey auth). This is **not** the DashScope `sk-` API Key flow.
@@ -2212,3 +2208,7 @@ await client.DeleteVocabAsync(new CcaiDeleteVocabRequest
 ```
 
 ASP.NET Core: `builder.Services.AddContactCenterAiClient(builder.Configuration)` with section `contactCenterAi` (`accessKeyId` / `accessKeySecret` / optional `endpoint`).
+
+See [Snapshot Files](./test/Cnblogs.DashScope.Tests.Shared/Utils/Snapshots.cs) for API parameter examples.
+
+Review [Tests](./test) for comprehensive usage examples.

@@ -4002,10 +4002,6 @@ Console.WriteLine(string.Join('\n', array));
 Console.WriteLine($"Token usage: {response.Usage?.TotalTokens}");
 ```
 
-查看 [快照文件](./test/Cnblogs.DashScope.Tests.Shared/Utils/Snapshots.cs) 获得 API 调用参数示例.
-
-查看 [测试](./test) 获得更多 API 使用示例。
-
 ## 伶鹊 CCAI-对话分析 AIO
 
 对话分析走独立的 `IContactCenterAiClient`（ACS3 AccessKey 鉴权），与 DashScope `sk-` API Key **不是同一套**。
@@ -4073,3 +4069,7 @@ await client.DeleteVocabAsync(new CcaiDeleteVocabRequest
 ```
 
 ASP.NET Core：`builder.Services.AddContactCenterAiClient(builder.Configuration)`，配置节 `contactCenterAi`（`accessKeyId` / `accessKeySecret` / 可选 `endpoint`）。
+
+查看 [快照文件](./test/Cnblogs.DashScope.Tests.Shared/Utils/Snapshots.cs) 获得 API 调用参数示例.
+
+查看 [测试](./test) 获得更多 API 使用示例。

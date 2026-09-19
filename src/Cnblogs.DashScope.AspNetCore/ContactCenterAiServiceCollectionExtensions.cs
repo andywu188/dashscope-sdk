@@ -95,8 +95,11 @@ public static class ContactCenterAiServiceCollectionExtensions
             return new ContactCenterAiClient(httpClient, options);
         });
 
-        return services.AddHttpClient(
-            DashScopeAspNetCoreDefaults.ContactCenterAiHttpClientName,
-            h => { h.BaseAddress = new Uri($"https://{endpoint}/"); });
-    }
+        return services.AddHttpClient(DashScopeAspNetCoreDefaults.ContactCenterAiHttpClientName)
+            .ConfigureHttpClient((sp, h) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ContactCenterAiOptions>>().Value;
+                h.BaseAddress = new Uri($"https://{endpoint}/");
+                h.Timeout = options.Timeout;
+            });
 }

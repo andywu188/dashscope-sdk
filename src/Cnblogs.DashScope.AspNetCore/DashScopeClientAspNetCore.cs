@@ -19,7 +19,10 @@ public class DashScopeClientAspNetCore
         IHttpClientFactory factory,
         DashScopeClientWebSocketPool pool,
         IOptions<DashScopeOptions> options)
-        : base(factory.CreateClient(DashScopeAspNetCoreDefaults.DefaultHttpClientName), pool)
+        : base(
+            factory.CreateClient(DashScopeAspNetCoreDefaults.DefaultHttpClientName),
+            pool,
+            factory.CreateClient(DashScopeAspNetCoreDefaults.SpeechTranscriptionDownloadHttpClientName))
     {
         MaximumUploadSpeed = options.Value.MaximumUploadSpeed;
     }

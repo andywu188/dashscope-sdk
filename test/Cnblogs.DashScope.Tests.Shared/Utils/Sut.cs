@@ -27,9 +27,12 @@ public static class Sut
     public static (DashScopeClientCore Client, MockHttpMessageHandler Handler) GetTestClient()
     {
         var handler = Substitute.ForPartsOf<MockHttpMessageHandler>();
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
+        var downloadClient = new HttpClient(handler, disposeHandler: false);
         var client = new DashScopeClientCore(
-            new HttpClient(handler) { BaseAddress = new Uri("https://example.com") },
-            new DashScopeClientWebSocketPool(new DashScopeClientWebSocketFactory(), new DashScopeOptions()));
+            httpClient,
+            new DashScopeClientWebSocketPool(new DashScopeClientWebSocketFactory(), new DashScopeOptions()),
+            downloadClient);
         return (client, handler);
     }
 

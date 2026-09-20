@@ -93,6 +93,7 @@ public static class ServiceCollectionInjector
                 sp.GetRequiredService<IDashScopeClientWebSocketFactory>(),
                 sp.GetRequiredService<IOptions<DashScopeOptions>>().Value));
         services.AddScoped<IDashScopeClient, DashScopeClientAspNetCore>();
+        services.AddHttpClient(DashScopeAspNetCoreDefaults.SpeechTranscriptionDownloadHttpClientName);
         return services.AddHttpClient(
             DashScopeAspNetCoreDefaults.DefaultHttpClientName,
             h =>

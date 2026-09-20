@@ -14,6 +14,7 @@ namespace Cnblogs.DashScope.Core;
 public class DashScopeClientCore : IDashScopeClient
 {
     private readonly HttpClient _httpClient;
+    private readonly HttpClient _speechTranscriptionDownloadClient;
     private readonly DashScopeClientWebSocketPool _socketPool;
 
     /// <summary>
@@ -22,9 +23,28 @@ public class DashScopeClientCore : IDashScopeClient
     /// <param name="httpClient">Pre-configured httpclient.</param>
     /// <param name="pool">Websocket pool.</param>
     public DashScopeClientCore(HttpClient httpClient, DashScopeClientWebSocketPool pool)
+        : this(httpClient, pool, null)
+    {
+    }
+
+    /// <summary>
+    /// For DI container or tests to inject pre-configured http clients.
+    /// </summary>
+    /// <param name="httpClient">Pre-configured DashScope API httpclient.</param>
+    /// <param name="pool">Websocket pool.</param>
+    /// <param name="speechTranscriptionDownloadClient">
+    /// Client used to download speech transcription results. Must not carry DashScope auth headers.
+    /// When null, a process-wide shared client is used.
+    /// </param>
+    public DashScopeClientCore(
+        HttpClient httpClient,
+        DashScopeClientWebSocketPool pool,
+        HttpClient? speechTranscriptionDownloadClient)
     {
         _httpClient = httpClient;
         _socketPool = pool;
+        _speechTranscriptionDownloadClient = speechTranscriptionDownloadClient
+                                            ?? SpeechTranscriptionDownloadClientCache.GetOrCreate(httpClient.Timeout);
     }
 
     /// <inheritdoc />
@@ -111,6 +131,129 @@ public class DashScopeClientCore : IDashScopeClient
     {
         var request = BuildSseRequest(HttpMethod.Post, ApiLinks.MultimodalGeneration, input);
         return StreamAsync<ModelResponse<MultimodalOutput, MultimodalTokenUsage>>(request, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<ModelResponse<SpeechTranscriptionOutput, SpeechTranscriptionUsage>>
+        CreateSpeechTranscriptionTaskAsync(
+            ModelRequest<SpeechTranscriptionInput, ISpeechTranscriptionParameters> input,
+            CancellationToken cancellationToken = default)
+    {
+        var request = BuildRequest(HttpMethod.Post, ApiLinks.AudioTranscription, input, isTask: true);
+        return (await SendAsync<ModelResponse<SpeechTranscriptionOutput, SpeechTranscriptionUsage>>(
+            request,
+            cancellationToken))!;
+    }
+
+    /// <inheritdoc />
+    public Task<DashScopeTask<SpeechTranscriptionOutput, SpeechTranscriptionUsage>> GetSpeechTranscriptionTaskAsync(
+        string taskId,
+        CancellationToken cancellationToken = default)
+    {
+        return GetTaskAsync<SpeechTranscriptionOutput, SpeechTranscriptionUsage>(taskId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<SpeechTranscriptionFileResult> GetSpeechTranscriptionResultAsync(
+        string transcriptionUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, ValidateSpeechTranscriptionResultUri(transcriptionUrl));
+        return (await SendAsync<SpeechTranscriptionFileResult>(
+            _speechTranscriptionDownloadClient,
+            request,
+            cancellationToken))!;
+    }
+
+    /// <inheritdoc />
+    public async Task<ModelResponse<SpeechRecognitionOutput, SpeechRecognitionUsage>> GetSpeechRecognitionAsync(
+        ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters> input,
+        CancellationToken cancellationToken = default)
+    {
+        var request = BuildRequest(HttpMethod.Post, ApiLinks.MultimodalGeneration, input);
+        return (await SendAsync<ModelResponse<SpeechRecognitionOutput, SpeechRecognitionUsage>>(
+            request,
+            cancellationToken))!;
+    }
+
+    /// <inheritdoc />
+    public IAsyncEnumerable<ModelResponse<SpeechRecognitionOutput, SpeechRecognitionUsage>>
+        GetSpeechRecognitionStreamAsync(
+            ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters> input,
+            CancellationToken cancellationToken = default)
+    {
+        var request = BuildSseRequest(HttpMethod.Post, ApiLinks.MultimodalGeneration, input);
+        return StreamAsync<ModelResponse<SpeechRecognitionOutput, SpeechRecognitionUsage>>(request, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<ModelResponse<SpeechVocabularyCreateOutput, SpeechVocabularyUsage>> CreateSpeechVocabularyAsync(
+        string targetModel,
+        string prefix,
+        IEnumerable<SpeechVocabularyItem> vocabulary,
+        CancellationToken cancellationToken = default)
+    {
+        return SendSpeechVocabularyAsync<SpeechVocabularyCreateOutput>(
+            SpeechVocabularyInput.Create(targetModel, prefix, vocabulary),
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<ModelResponse<SpeechVocabularyListOutput, SpeechVocabularyUsage>> ListSpeechVocabulariesAsync(
+        string? prefix = null,
+        int? pageIndex = null,
+        int? pageSize = null,
+        CancellationToken cancellationToken = default)
+    {
+        return SendSpeechVocabularyAsync<SpeechVocabularyListOutput>(
+            SpeechVocabularyInput.List(prefix, pageIndex, pageSize),
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<ModelResponse<SpeechVocabularyQueryOutput, SpeechVocabularyUsage>> GetSpeechVocabularyAsync(
+        string vocabularyId,
+        CancellationToken cancellationToken = default)
+    {
+        return SendSpeechVocabularyAsync<SpeechVocabularyQueryOutput>(
+            SpeechVocabularyInput.Query(vocabularyId),
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<ModelResponse<SpeechVocabularyMutationOutput, SpeechVocabularyUsage>> UpdateSpeechVocabularyAsync(
+        string vocabularyId,
+        IEnumerable<SpeechVocabularyItem> vocabulary,
+        CancellationToken cancellationToken = default)
+    {
+        return SendSpeechVocabularyAsync<SpeechVocabularyMutationOutput>(
+            SpeechVocabularyInput.Update(vocabularyId, vocabulary),
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<ModelResponse<SpeechVocabularyMutationOutput, SpeechVocabularyUsage>> DeleteSpeechVocabularyAsync(
+        string vocabularyId,
+        CancellationToken cancellationToken = default)
+    {
+        return SendSpeechVocabularyAsync<SpeechVocabularyMutationOutput>(
+            SpeechVocabularyInput.Delete(vocabularyId),
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<ModelResponse<TOutput, SpeechVocabularyUsage>> SendSpeechVocabularyAsync<TOutput>(
+        SpeechVocabularyInput input,
+        CancellationToken cancellationToken = default)
+        where TOutput : class
+    {
+        var payload = new ModelRequest<SpeechVocabularyInput>
+        {
+            Model = SpeechVocabularyModels.SpeechBiasing,
+            Input = input
+        };
+        var request = BuildRequest(HttpMethod.Post, ApiLinks.AudioCustomization, payload);
+        return (await SendAsync<ModelResponse<TOutput, SpeechVocabularyUsage>>(request, cancellationToken))!;
     }
 
     /// <inheritdoc />
@@ -579,6 +722,40 @@ public class DashScopeClientCore : IDashScopeClient
         return BuildRequest(method, url, (string?)null);
     }
 
+    private static Uri ValidateSpeechTranscriptionResultUri(string transcriptionUrl)
+    {
+        if (Uri.TryCreate(transcriptionUrl, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && IsDashScopeSpeechTranscriptionResultHost(uri.Host))
+        {
+            return uri;
+        }
+
+        throw new DashScopeException(
+            transcriptionUrl,
+            0,
+            null,
+            "Speech transcription result URL must be an HTTPS DashScope result URL.");
+    }
+
+    private static bool IsDashScopeSpeechTranscriptionResultHost(string host)
+    {
+        const string prefix = "dashscope-result-";
+        const string separator = ".oss-";
+        const string suffix = ".aliyuncs.com";
+        if (host.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) == false
+            || host.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) == false)
+        {
+            return false;
+        }
+
+        var middle = host[prefix.Length..^suffix.Length];
+        var separatorIndex = middle.IndexOf(separator, StringComparison.OrdinalIgnoreCase);
+        return separatorIndex > 0
+               && separatorIndex < middle.Length - separator.Length
+               && middle.IndexOf('.', separatorIndex + separator.Length) < 0;
+    }
+
     private static HttpRequestMessage BuildRequest<TPayload>(
         HttpMethod method,
         string url,
@@ -660,8 +837,19 @@ public class DashScopeClientCore : IDashScopeClient
     private async Task<TResponse?> SendAsync<TResponse>(HttpRequestMessage message, CancellationToken cancellationToken)
         where TResponse : class
     {
-        var response = await GetSuccessResponseAsync(
+        return await SendAsync<TResponse>(_httpClient, message, cancellationToken);
+    }
+
+    private async Task<TResponse?> SendAsync<TResponse>(
+        HttpClient httpClient,
+        HttpRequestMessage message,
+        CancellationToken cancellationToken)
+        where TResponse : class
+    {
+        var response = await GetSuccessResponseAsync<DashScopeError>(
+            httpClient,
             message,
+            f => f,
             HttpCompletionOption.ResponseContentRead,
             cancellationToken);
         return await response.Content.ReadFromJsonAsync<TResponse>(
@@ -711,7 +899,12 @@ public class DashScopeClientCore : IDashScopeClient
         HttpCompletionOption completeOption = HttpCompletionOption.ResponseContentRead,
         CancellationToken cancellationToken = default)
     {
-        return await GetSuccessResponseAsync<DashScopeError>(message, f => f, completeOption, cancellationToken);
+        return await GetSuccessResponseAsync<DashScopeError>(
+            _httpClient,
+            message,
+            f => f,
+            completeOption,
+            cancellationToken);
     }
 
     private async Task<HttpResponseMessage> GetSuccessResponseAsync<TError>(
@@ -720,10 +913,25 @@ public class DashScopeClientCore : IDashScopeClient
         HttpCompletionOption completeOption = HttpCompletionOption.ResponseContentRead,
         CancellationToken cancellationToken = default)
     {
+        return await GetSuccessResponseAsync(
+            _httpClient,
+            message,
+            errorMapper,
+            completeOption,
+            cancellationToken);
+    }
+
+    private async Task<HttpResponseMessage> GetSuccessResponseAsync<TError>(
+        HttpClient httpClient,
+        HttpRequestMessage message,
+        Func<TError, DashScopeError> errorMapper,
+        HttpCompletionOption completeOption = HttpCompletionOption.ResponseContentRead,
+        CancellationToken cancellationToken = default)
+    {
         HttpResponseMessage response;
         try
         {
-            response = await _httpClient.SendAsync(message, completeOption, cancellationToken);
+            response = await httpClient.SendAsync(message, completeOption, cancellationToken);
         }
         catch (Exception e)
         {

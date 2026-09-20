@@ -33,7 +33,8 @@ public class DashScopeClient : DashScopeClientCore
         int socketPoolSize = 32)
         : base(
             GetConfiguredClient(apiKey, timeout, baseAddress, workspaceId),
-            GetConfiguredSocketPool(apiKey, baseWebsocketAddress, socketPoolSize, workspaceId))
+            GetConfiguredSocketPool(apiKey, baseWebsocketAddress, socketPoolSize, workspaceId),
+            GetConfiguredDownloadClient(timeout))
     {
     }
 
@@ -88,5 +89,10 @@ public class DashScopeClient : DashScopeClientCore
         return client;
 
         string GetCacheKey() => $"{apiKey}-{timeout?.TotalMilliseconds}-{baseAddress}-{workspaceId}";
+    }
+
+    private static HttpClient GetConfiguredDownloadClient(TimeSpan? timeout = null)
+    {
+        return SpeechTranscriptionDownloadClientCache.GetOrCreate(timeout ?? TimeSpan.FromMinutes(2));
     }
 }

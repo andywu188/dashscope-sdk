@@ -154,4 +154,26 @@ public class ServiceCollectionInjectorTests
         // Assert
         Assert.Throws<InvalidOperationException>(act);
     }
+
+    [Fact]
+    public void Parameter_RegistersUnauthenticatedSpeechTranscriptionDownloadClient()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        services.AddDashScopeClient(ApiKey);
+        var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IHttpClientFactory>();
+        var apiClient = factory.CreateClient(DashScopeAspNetCoreDefaults.DefaultHttpClientName);
+        var downloadClient = factory.CreateClient(
+            DashScopeAspNetCoreDefaults.SpeechTranscriptionDownloadHttpClientName);
+
+        // Assert
+        Assert.NotNull(downloadClient);
+        Assert.Null(downloadClient.DefaultRequestHeaders.Authorization);
+        Assert.False(downloadClient.DefaultRequestHeaders.Contains("X-DashScope-WorkSpace"));
+        Assert.Null(downloadClient.BaseAddress);
+        Assert.NotNull(apiClient.DefaultRequestHeaders.Authorization);
+    }
 }

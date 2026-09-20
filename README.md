@@ -1,4 +1,4 @@
-English | [简体中文](https://github.com/cnblogs/dashscope-sdk/blob/main/README.zh-Hans.md)
+English | [简体中文](./README.zh-Hans.md)
 
 # Cnblogs.DashScopeSDK
 
@@ -81,6 +81,7 @@ public class YourService(IDashScopeClient client)
     }
 }
 ```
+
 ### Using `Microsoft.Extensions.AI` Interface
 
 Install NuGet package `Cnblogs.DashScope.AI`
@@ -207,6 +208,11 @@ Console.WriteLine($"Image token usage: {raw?.Usage?.ImageTokens}");
     - [Multilanguage](#multilanguage)
   - [GUI](#gui)
   - [Audio Understanding](#audio-understanding)
+- [Speech Recognition](#speech-recognition) - Paraformer / Fun-ASR file transcription and Fun-ASR-Flash recognition
+  - [Supported Models and Regions](#supported-models-and-regions)
+  - [Asynchronous File Transcription](#asynchronous-file-transcription)
+  - [Flash Recognition](#flash-recognition)
+  - [Speech Vocabulary](#speech-vocabulary)
 - [Text-to-Speech](#text-to-speech) - CosyVoice, Sambert, etc. For TTS applications
 - [Image Generation](#image-generation) - qwen-image-2.0-pro, wanx2.1, etc. For text-to-image, image editing, portrait style transfer and image translation
 - [Application Call](#application-call)
@@ -1810,6 +1816,118 @@ In summary, the audio portrays a modern Mandarin-speaking man, exasperated by a 
 Usage: in(160)/out(514)/audio(152)/total(674)
 ```
 
+## Speech Recognition
+
+Dedicated speech recognition APIs (separate from multimodal [Audio Understanding](#audio-understanding) and `AsrOptions` on multimodal parameters).
+
+Official guide: [Non-realtime speech recognition - Supported models and regions](https://docs.bailian.console.aliyun.com/zh/model-studio/non-realtime-speech-recognition-user-guide#%E6%94%AF%E6%8C%81%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%9C%B0%E5%9F%9F).
+
+### Supported Models and Regions
+
+Use the matching regional API Key / base address. Model availability differs by region.
+
+| Call mode | Series | Example model ids | Beijing | Singapore | US (Virginia) |
+|-----------|--------|-------------------|---------|------------|---------------|
+| Async file transcription (`CreateSpeechTranscriptionTaskAsync`) | Qwen-Audio-3.0-ASR-Flash-Filetrans | `qwen-audio-3.0-asr-flash-filetrans` | Yes | Yes | No |
+| Async | Fun-ASR | `fun-asr`, `fun-asr-2025-11-07`, `fun-asr-mtl`, ... | Yes | Yes | No |
+| Async | Qwen3-ASR-Flash-Filetrans | `qwen3-asr-flash-filetrans`, `qwen3-asr-flash-filetrans-2025-11-17` | Yes | Yes | No |
+| Async | Paraformer | `paraformer-v2`, `paraformer-8k-v2`, `paraformer-v1`, ... | Yes | No | No |
+| Sync / SSE flash (`GetSpeechRecognitionAsync`) | Qwen-Audio-3.0-ASR-Flash | `qwen-audio-3.0-asr-flash` | Yes | Yes | No |
+| Sync / SSE | Fun-ASR-Flash | `fun-asr-flash-2026-06-15` | Yes | Yes | No |
+| Sync / SSE | Qwen3-ASR-Flash | `qwen3-asr-flash`, `qwen3-asr-flash-2026-02-10`, ... | Yes | Yes | Yes (`qwen3-asr-flash` / `qwen3-asr-flash-2025-09-08`) |
+
+Selection tip from the official guide: prefer flash/sync models for audio under ~5 minutes; use filetrans/async models for longer recordings.
+
+### Asynchronous File Transcription
+
+Use `CreateSpeechTranscriptionTaskAsync` + `GetSpeechTranscriptionTaskAsync` for Paraformer / Fun-ASR / Qwen-Audio / Qwen3 filetrans models. Poll until the task finishes, then download the result JSON with `GetSpeechTranscriptionResultAsync`.
+
+```csharp
+var submit = await client.CreateSpeechTranscriptionTaskAsync(
+    new ModelRequest<SpeechTranscriptionInput, ISpeechTranscriptionParameters>
+    {
+        Model = "paraformer-v2", // or fun-asr / qwen-audio-3.0-asr-flash-filetrans / qwen3-asr-flash-filetrans
+        Input = new SpeechTranscriptionInput
+        {
+            FileUrls = new[] { "https://example.com/audio.wav" }
+        },
+        Parameters = new SpeechTranscriptionParameters
+        {
+            ChannelId = new[] { 0 },
+            LanguageHints = new[] { "zh", "en" },
+            // VocabularyId = "your-vocabulary-id" // from speech vocabulary CRUD
+        }
+    });
+
+DashScopeTask<SpeechTranscriptionOutput, SpeechTranscriptionUsage> task;
+do
+{
+    await Task.Delay(1000);
+    task = await client.GetSpeechTranscriptionTaskAsync(submit.Output.TaskId);
+} while (task.Output.TaskStatus is DashScopeTaskStatus.Pending or DashScopeTaskStatus.Running);
+
+var url = task.Output.Results![0].TranscriptionUrl!;
+var result = await client.GetSpeechTranscriptionResultAsync(url);
+Console.WriteLine(result.Transcripts![0].Text);
+```
+
+Notes:
+
+- Submit requests send `X-DashScope-Async: enable`.
+- `oss://` temporary URLs trigger `X-DashScope-OssResourceResolve`.
+- Instant hot words can be passed via `parameters.vocabulary` (dictionary); pre-compiled lists use `parameters.vocabulary_id`.
+
+### Flash Recognition
+
+Use `GetSpeechRecognitionAsync` / `GetSpeechRecognitionStreamAsync` for Fun-ASR-Flash / Qwen-Audio-3.0-ASR-Flash / Qwen3-ASR-Flash. These call the multimodal-generation endpoint with a dedicated message schema (`type` / `input_audio`), not `MultimodalMessage`.
+
+```csharp
+var response = await client.GetSpeechRecognitionAsync(
+    new ModelRequest<SpeechRecognitionInput, ISpeechRecognitionParameters>
+    {
+        Model = "fun-asr-flash-2026-06-15", // or qwen-audio-3.0-asr-flash / qwen3-asr-flash
+        Input = new SpeechRecognitionInput
+        {
+            Messages = new[]
+            {
+                SpeechRecognitionMessage.User(
+                [
+                    SpeechRecognitionMessageContent.InputAudioContent("https://example.com/audio.wav")
+                    // or Data URI / Base64
+                ])
+            }
+        },
+        Parameters = new SpeechRecognitionParameters
+        {
+            Format = "wav",
+            SampleRate = "16000",
+            LanguageHints = new[] { "zh" } // Fun-ASR-Flash: only first hint is used
+        }
+    });
+Console.WriteLine(response.Output.Text);
+```
+
+SSE streaming (`GetSpeechRecognitionStreamAsync`) returns intermediate results when the audio is at least about one minute long. Prefer finalized sentences where `sentence.sentence_end == true`.
+
+### Speech Vocabulary
+
+Manage pre-compiled hot-word lists with the `speech-biasing` customization API, then pass the returned id as `vocabulary_id` to transcription / flash recognition.
+
+```csharp
+var created = await client.CreateSpeechVocabularyAsync(
+    "paraformer-v2",
+    "demo",
+    new[] { new SpeechVocabularyItem("阿里巴巴", 4, "zh") });
+var vocabularyId = created.Output.VocabularyId;
+
+await client.ListSpeechVocabulariesAsync("demo");
+await client.GetSpeechVocabularyAsync(vocabularyId);
+await client.UpdateSpeechVocabularyAsync(vocabularyId, new[] { new SpeechVocabularyItem("通义千问", 5, "zh") });
+await client.DeleteSpeechVocabularyAsync(vocabularyId);
+```
+
+Singapore sub-workspaces may not support vocabulary features (see official docs). Instant hot words (`parameters.vocabulary`) do not require this CRUD API.
+
 ## Text-to-Speech
 
 Create a speech synthesis session using `dashScopeClient.CreateSpeechSynthesizerSocketSessionAsync()`.
@@ -2139,6 +2257,74 @@ var response = await dashScopeClient.GetTextEmbeddingsAsync(
 var embedding = response.Output.Embeddings.First().Embedding;
 Console.WriteLine($"Embedding vector length: {embedding.Length}");
 ```
+
+## LingQue CCAI Conversation Analysis AIO
+
+Use the separate `IContactCenterAiClient` (ACS3 AccessKey auth). This is **not** the DashScope `sk-` API Key flow.
+
+```csharp
+using var client = new ContactCenterAiClient(new ContactCenterAiOptions
+{
+    AccessKeyId = "your-ak",
+    AccessKeySecret = "your-sk",
+    // Default endpoint: contactcenterai.cn-shanghai.aliyuncs.com
+    // Do not use Bailian workspace API Host (*.maas.aliyuncs.com)
+});
+
+var response = await client.AnalyzeConversationAsync(
+    workspaceId: "llm-xxxxxxxx",
+    appId: "your-ccai-app-id",
+    AnalyzeConversationRequest.ForSummary(new CcaiDialogue
+    {
+        SessionId = "s1",
+        Sentences =
+        [
+            new CcaiSentence { Role = "user", Text = "我想办信用卡" },
+            new CcaiSentence { Role = "agent", Text = "好的，请提供姓名和手机号" },
+        ]
+    }));
+Console.WriteLine(response.Text);
+```
+
+Covered APIs: `AnalyzeConversation`, `RunCompletion` / `RunCompletionMessage`, `AnalyzeImage` / `GeneralAnalyzeImage`, `CreateTask` / `GetTaskResult`, and vocabulary management (below).
+
+#### Vocabulary (CCAI hot words)
+
+LingQue CCAI vocabulary CRUD. This is **not** Bailian ASR / `speech-biasing` custom hot words — `vocabularyId` values are not interchangeable. Pass the created id to `CreateTask` as `transcription.vocabularyId`.
+
+```csharp
+// Create
+var created = await client.CreateVocabAsync(new CcaiCreateVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    Name = "sales-hotwords",
+    Description = "contact-center",
+    AudioModelCode = "nls",
+    WordWeightList =
+    [
+        new CcaiWordWeight { Word = "信用卡", Weight = 4 },
+        new CcaiWordWeight { Word = "分期", Weight = 3 },
+    ]
+});
+var vocabularyId = created.Data!.VocabularyId;
+
+// Get / List / Update / Delete
+await client.GetVocabAsync(new CcaiGetVocabRequest { WorkspaceId = "...", VocabularyId = vocabularyId! });
+await client.ListVocabAsync(new CcaiListVocabRequest { WorkspaceId = "llm-xxxxxxxx" });
+await client.UpdateVocabAsync(new CcaiUpdateVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    VocabularyId = vocabularyId!,
+    WordWeightList = [new CcaiWordWeight { Word = "信用卡", Weight = 5 }]
+});
+await client.DeleteVocabAsync(new CcaiDeleteVocabRequest
+{
+    WorkspaceId = "llm-xxxxxxxx",
+    VocabularyId = vocabularyId!
+});
+```
+
+ASP.NET Core: `builder.Services.AddContactCenterAiClient(builder.Configuration)` with section `contactCenterAi` (`accessKeyId` / `accessKeySecret` / optional `endpoint`).
 
 See [Snapshot Files](./test/Cnblogs.DashScope.Tests.Shared/Utils/Snapshots.cs) for API parameter examples.
 
